@@ -3,10 +3,7 @@ import com.nodev.notification.bl.entity.enums.AttemptResult;
 import com.nodev.notification.bl.entity.enums.Channel;
 import com.nodev.notification.bl.entity.enums.WebhookStatus;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.Instant;
 
@@ -16,6 +13,14 @@ import java.time.Instant;
 public class DeliveryAttempt {
 
     public DeliveryAttempt() {
+    }
+
+    public DeliveryAttempt(NotificationRequest notification, DeliveryAttempt parentAttempt,
+                           Channel channel, int attemptNumber) {
+        this.notification = notification;
+        this.parentAttempt = parentAttempt;
+        this.channel = channel;
+        this.attemptNumber = this.attemptNumber;
     }
 
     @Id
@@ -56,6 +61,8 @@ public class DeliveryAttempt {
 
     @Column(name = "webhook_received_at")
     private Instant webhookReceivedAt;
+
+
 
     public void markSuccess() {
         this.result = AttemptResult.SUCCESS;

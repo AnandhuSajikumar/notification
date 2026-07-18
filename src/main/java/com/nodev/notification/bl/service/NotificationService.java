@@ -39,6 +39,7 @@ public class NotificationService {
         NotificationRequest notification = new NotificationRequest(
                 request.getRecipientId(),
                 request.getTemplateId(),
+                request.getChannel(),
                 request.getPayload(),
                 request.getIdempotencyKey()
         );

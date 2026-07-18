@@ -3,13 +3,14 @@ package com.nodev.notification.bl.repository;
 import com.nodev.notification.bl.entity.DeliveryAttempt;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 import java.time.Instant;
 import java.util.List;
 
-public interface DeliveryAttemptRepository extends PagingAndSortingRepository<DeliveryAttempt, Long> {
+public interface DeliveryAttemptRepository extends JpaRepository<DeliveryAttempt, Long> {
 
     List<DeliveryAttempt> findByNotification_IdOrderByAttemptNumberAsc(Long notificationId);
 

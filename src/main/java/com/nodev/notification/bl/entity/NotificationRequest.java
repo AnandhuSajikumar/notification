@@ -1,4 +1,5 @@
 package com.nodev.notification.bl.entity;
+import com.nodev.notification.bl.entity.enums.Channel;
 import com.nodev.notification.bl.entity.enums.NotificationStatus;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
@@ -15,9 +16,10 @@ import java.util.Map;
 @Getter
 public class NotificationRequest {
 
-    public NotificationRequest(String recipientId,String templateId, Map<String, Object> payload, String idempotencyKey) {
+    public NotificationRequest(String recipientId,String templateId, Channel channel, Map<String, Object> payload, String idempotencyKey) {
         this.recipientId = recipientId;
         this.templateId = templateId;
+        this.channel = channel;
         this.payload = payload;
         this.idempotencyKey = idempotencyKey;
     }
@@ -42,6 +44,10 @@ public class NotificationRequest {
     @Type(JsonType.class)  // hypersistence-utils, or convert manually — flag below
     @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
     private Map<String, Object> payload;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "channel", nullable = false)
+    private Channel channel;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
