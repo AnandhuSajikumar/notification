@@ -73,6 +73,10 @@ public class DeliveryAttempt {
         this.nextRetryAt = nextRetryAt;
     }
 
+    public void markRetryScheduled() {
+        this.nextRetryAt = null;
+    }
+
     public void recordWebhook(WebhookStatus webhookStatus) {
         this.webhookStatus = webhookStatus;
         this.webhookReceivedAt = Instant.now();
