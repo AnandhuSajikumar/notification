@@ -1,7 +1,7 @@
 package com.nodev.notification.bl.controller;
 
-import com.nodev.notification.bl.model.GenericResponse;
-import com.nodev.notification.bl.model.UpsertSubscriberRequest;
+import com.nodev.notification.model.GenericResponse;
+import com.nodev.notification.model.UpsertSubscriberRequest;
 import com.nodev.notification.bl.service.SubscriberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

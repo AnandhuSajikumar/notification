@@ -1,4 +1,5 @@
 package com.nodev.notification.exceptionHandler;
+
 import com.nodev.notification.model.GenericResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,20 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateNotificationException.class)
     public ResponseEntity<GenericResponse<Void>> handleDuplicate(DuplicateNotificationException e) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(GenericResponse.failure(e.getMessage()));
+    }
+
+    @ExceptionHandler(NotificationNotFoundException.class)
+    public ResponseEntity<GenericResponse<Void>> handleNotFound(NotificationNotFoundException e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(GenericResponse.failure(e.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidReplayStateException.class)
+    public ResponseEntity<GenericResponse<Void>> handleInvalidReplayState(InvalidReplayStateException e) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(GenericResponse.failure(e.getMessage()));
