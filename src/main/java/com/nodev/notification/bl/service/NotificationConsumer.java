@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 
 /**
  * Reads notifications.outbound and creates the first DeliveryAttempt.
- *
+
  * FIX (architectural review point A): this method is deliberately NOT
- * @Transactional anymore. The old version wrapped the whole thing -
+ * (@Transactional) anymore. The old version wrapped the whole thing -
  * including the external dispatch call - in one transaction, which would
  * hold a DB connection open for however long a slow/hanging SMTP call
  * takes. Now: read (short internal transaction via the repository call,
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
  * open at all) -> persist (a separate, real transaction, via
  * NotificationOutcomeRecorder). Same principle already applied in
  * RetryExecutor/RetryScheduler, now applied here too.
- *
+
  * Redis dedup (via NotificationDedupService) guards against Kafka's
  * at-least-once redelivery causing this to run twice for the same event.
  */

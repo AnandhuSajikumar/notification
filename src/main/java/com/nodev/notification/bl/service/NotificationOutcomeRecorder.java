@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Separate bean, same reason as RetryOutcomeRecorder: called via Spring's
  * proxy from NotificationConsumer (a real bean-to-bean call), not as a
  * private method on the consumer itself, so @Transactional actually applies.
- *
+
  * The event MUST be published from inside this transactional method, not
  * from the (now non-transactional) consumer - @TransactionalEventListener
  * with AFTER_COMMIT only fires if the publish happens within an active

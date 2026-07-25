@@ -90,6 +90,12 @@
 			<version>3.9.9</version>
 		</dependency>
 
+		<dependency>
+			<groupId>me.paulschwarz</groupId>
+			<artifactId>spring-dotenv</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+
 		<!-- Lombok: @Slf4j, @Getter/@Setter, constructor injection boilerplate reduction -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
