@@ -77,6 +77,7 @@ public class NotificationService {
                 "notificationId", notification.getId(),
                 "recipientId", notification.getRecipientId(),
                 "templateId", notification.getTemplateId(),
+                "channel", notification.getChannel(),
                 "payload", notification.getPayload()
         );
     }

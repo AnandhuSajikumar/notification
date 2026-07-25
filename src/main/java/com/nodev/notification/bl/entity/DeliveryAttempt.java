@@ -20,7 +20,7 @@ public class DeliveryAttempt {
         this.notification = notification;
         this.parentAttempt = parentAttempt;
         this.channel = channel;
-        this.attemptNumber = this.attemptNumber;
+        this.attemptNumber = attemptNumber;
     }
 
     @Id

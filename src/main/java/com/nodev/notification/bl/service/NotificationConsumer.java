@@ -5,15 +5,27 @@ import com.nodev.notification.bl.entity.DeliveryAttempt;
 import com.nodev.notification.bl.entity.NotificationRequest;
 import com.nodev.notification.bl.entity.enums.Channel;
 import com.nodev.notification.model.NotificationEventMessage;
+import com.nodev.notification.model.NotificationProcessedEvent;
 import com.nodev.notification.bl.repository.DeliveryAttemptRepository;
 import com.nodev.notification.bl.repository.NotificationRequestRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
+/**
+ * Reads notifications.outbound and creates the first DeliveryAttempt,
+ * calling DispatchService.
+ *
+ * Redis dedup (via NotificationDedupService) guards against Kafka's
+ * at-least-once redelivery causing this to run twice for the same event.
+ * Checked at the very start (read-only); the "mark processed" write only
+ * happens AFTER the DB transaction genuinely commits (see
+ * DedupMarkerListener) - never inside this method itself, which would
+ * mark it before commit is guaranteed.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -24,10 +36,17 @@ public class NotificationConsumer {
     private final SubscriberResolver subscriberResolver;
     private final RetryPolicy retryPolicy;
     private final DispatchService dispatchService;
+    private final NotificationDedupService dedupService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @KafkaListener(topics = "${notification.kafka.outbound-topic}")
     @Transactional
     public void onNotificationCreated(NotificationEventMessage event) {
+        if (dedupService.isAlreadyProcessed(event.getNotificationId())) {
+            log.info("notificationId={} already processed (Kafka redelivery), skipping", event.getNotificationId());
+            return;
+        }
+
         log.info("Consumed event for notificationId={}", event.getNotificationId());
 
         NotificationRequest notification = notificationRequestRepository
@@ -56,19 +75,18 @@ public class NotificationConsumer {
             attempt.markSuccess();
             notification.markSent();
         } else if (retryPolicy.isExhausted(attempt.getAttemptNumber())) {
-            // MAX_ATTEMPTS would somehow be 1 - no retry even gets a chance.
-            // Not the normal case with MAX_ATTEMPTS=3, but the branch must
-            // still exist and be correct.
             attempt.markFailure(null);
             notification.markFailed();
         } else {
             attempt.markFailure(retryPolicy.nextRetryAt(attempt.getAttemptNumber()));
-            // notification.status stays DISPATCHED - it's not FAILED yet,
-            // a retry is still pending.
         }
 
         deliveryAttemptRepository.save(attempt);
         notificationRequestRepository.save(notification);
+
+        // Published now, inside the transaction - but DedupMarkerListener
+        // only actually touches Redis AFTER this transaction commits.
+        eventPublisher.publishEvent(new NotificationProcessedEvent(notification.getId()));
 
         log.info("Notification id={} attempt #{} on channel={} result={}",
                 notification.getId(), attempt.getAttemptNumber(), channel, success ? "SUCCESS" : "FAILURE");
