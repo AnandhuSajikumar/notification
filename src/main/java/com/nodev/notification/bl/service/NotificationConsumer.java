@@ -65,6 +65,8 @@ public class NotificationConsumer {
                 1       // attemptNumber
         );
 
+        try{
+
         String resolvedAddress = subscriberResolver.resolve(event.getRecipientId(), channel);
         boolean success = resolvedAddress != null
                 && dispatchService.dispatch(channel, resolvedAddress, event.getPayload());
@@ -80,9 +82,22 @@ public class NotificationConsumer {
         }
 
 
-        notificationOutcomeRecorder.record(attempt, notification);
+
 
         log.info("Notification id={} attempt #{} on channel={} result={}",
                 notification.getId(), attempt.getAttemptNumber(), channel, success ? "SUCCESS" : "FAILURE");
     }
+        catch (Exception e){
+            log.error("Unexpected error during dispatch for notification id={} : {}", notification.getId(), e.getMessage(), e);
+            if(retryPolicy.isExhausted(attempt.getAttemptNumber())){
+                attempt.markFailure(null);
+                notification.markFailed();
+            }
+            else{
+                attempt.markFailure(retryPolicy.nextRetryAt(attempt.getAttemptNumber()));
+            }
+        }
+        notificationOutcomeRecorder.record(attempt, notification);
+
+        }
 }
