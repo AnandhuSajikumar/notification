@@ -35,6 +35,13 @@ public class GlobalExceptionHandler {
                 .body(GenericResponse.failure(e.getMessage()));
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<GenericResponse<Void>> handleRateLimitExceeded(RateLimitExceededException e) {
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(GenericResponse.failure(e.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<GenericResponse<Void>> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()
