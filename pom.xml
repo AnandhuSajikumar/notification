@@ -78,6 +78,19 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
+		<!-- ShedLock: distributed locking for @Scheduled tasks (prevents
+		     duplicate execution when multiple service instances run) -->
+		<dependency>
+			<groupId>net.javacrumbs.shedlock</groupId>
+			<artifactId>shedlock-spring</artifactId>
+			<version>5.16.0</version>
+		</dependency>
+		<dependency>
+			<groupId>net.javacrumbs.shedlock</groupId>
+			<artifactId>shedlock-provider-jdbc-template</artifactId>
+			<version>5.16.0</version>
+		</dependency>
+
 		<!-- Clean JSONB <-> Map/POJO mapping for Hibernate.
              The "-63" module name covers Hibernate 6.3 through 6.6, so it's
              correct for Spring Boot 3.3.4's bundled Hibernate. The version

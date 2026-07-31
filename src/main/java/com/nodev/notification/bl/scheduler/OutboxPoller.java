@@ -5,6 +5,7 @@ import com.nodev.notification.bl.repository.OutboxEventRepository;
 import jakarta.validation.Payload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +37,7 @@ public class OutboxPoller {
     private String outboundTopic;
 
     @Scheduled(fixedDelay = 5000)
+    @SchedulerLock(name = "pollAndPublish", lockAtMostFor = "30s", lockAtLeastFor = "4s")
     public void pollAndPublish(){
         Page<OutboxEvent> batch = outboxEventRepository.findUnPublishedBatch(PageRequest.of(0,BATCH_SIZE));
         if(batch.isEmpty()){

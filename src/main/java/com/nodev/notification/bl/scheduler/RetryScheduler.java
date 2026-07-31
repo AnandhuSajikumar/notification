@@ -5,6 +5,7 @@ import com.nodev.notification.bl.repository.DeliveryAttemptRepository;
 import com.nodev.notification.bl.service.RetryExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,6 +32,7 @@ public class RetryScheduler {
     private final RetryExecutor retryExecutor;
 
     @Scheduled(fixedDelay = 10000)
+    @SchedulerLock(name = "retryDueAttempts", lockAtMostFor = "2m", lockAtLeastFor = "9s")
     public void retryDueAttempts() {
         Page<DeliveryAttempt> due = deliveryAttemptRepository.findRetryDueAttempts(
                 Instant.now(), PageRequest.of(0, BATCH_SIZE));
