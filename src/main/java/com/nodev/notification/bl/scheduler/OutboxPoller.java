@@ -9,10 +9,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.sql.Time;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -37,27 +41,34 @@ public class OutboxPoller {
         if(batch.isEmpty()){
             return;
         }
-        for(OutboxEvent event : batch){
-            publishSingle(event);
+
+        List<OutboxEvent> events = batch.getContent();
+        List<CompletableFuture<SendResult<String, Object>>> futures = new ArrayList<>(events.size());
+
+        // Fire all sends concurrently — Kafka's producer batches these internally
+        for (OutboxEvent event : events) {
+            futures.add(kafkaTemplate.send(outboundTopic, event.getAggregateId().toString(), event.getPayload()));
         }
-    }
 
-    private void publishSingle(OutboxEvent event){
-        try {
-            kafkaTemplate.send(outboundTopic, event.getAggregateId().toString(), event.getPayload())
-                    .get(KAFKA_ATK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        // Await all results — most futures will already be complete by now,
+        // total wait ≈ max(individual ack times) instead of sum
+        for (int i = 0; i < futures.size(); i++) {
+            OutboxEvent event = events.get(i);
+            try {
+                futures.get(i).get(KAFKA_ATK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-            event.markPublished();
-            outboxEventRepository.save(event);
+                event.markPublished();
+                outboxEventRepository.save(event);
 
-            log.info("Published outbox event id={} type={} to topic={}",
-                    event.getId(), event.getEventType(), outboundTopic);
+                log.info("Published outbox event id={} type={} to topic={}",
+                        event.getId(), event.getEventType(), outboundTopic);
 
-        }catch (ExecutionException | TimeoutException e){
-            log.error("Failed to publish outbox event id={}, will retry next cycle", event.getId(), e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Interrupted while publishing outbox event id={}", event.getId(), e);
+            } catch (ExecutionException | TimeoutException e) {
+                log.error("Failed to publish outbox event id={}, will retry next cycle", event.getId(), e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("Interrupted while publishing outbox event id={}", event.getId(), e);
+            }
         }
     }
 }
