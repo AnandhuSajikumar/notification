@@ -93,10 +93,16 @@ class NotificationConcurrencyTest {
      */
     @Test
     void scenarioA_concurrentDuplicateIdempotencyKey_exactlyOneCreated() throws InterruptedException {
-        String idempotencyKey = "test-idem-concurrent-" + UUID.randomUUID();
-        String recipientId    = "test-recipient-scA-"   + UUID.randomUUID();
+        String idempotencyKey  = "test-idem-concurrent-" + UUID.randomUUID();
+        String baseRecipientId = "test-recipient-scA-"   + UUID.randomUUID();
 
-        registerSmsSubscriber(recipientId);
+        // Each thread gets its own recipientId so the per-recipient rate limiter
+        // (5/min) does not fire before the idempotency check. The dedup check is
+        // purely on idempotencyKey, so different recipients with the same key
+        // still fully exercise the concurrent idempotency race.
+        for (int i = 0; i < SCENARIO_A_THREADS; i++) {
+            registerSmsSubscriber(baseRecipientId + "-t" + i);
+        }
 
         CountDownLatch readyLatch   = new CountDownLatch(SCENARIO_A_THREADS);
         CountDownLatch startLatch   = new CountDownLatch(1);
@@ -105,13 +111,14 @@ class NotificationConcurrencyTest {
         List<Thread>   threads      = new ArrayList<>(SCENARIO_A_THREADS);
 
         for (int i = 0; i < SCENARIO_A_THREADS; i++) {
+            final String threadRecipientId = baseRecipientId + "-t" + i;
             Thread t = new Thread(() -> {
                 readyLatch.countDown();
                 try {
                     startLatch.await(); // park here until all threads are ready
                     ResponseEntity<String> response = restTemplate.postForEntity(
                             baseUrl + "/notifications",
-                            new HttpEntity<>(buildNotificationPayload(recipientId, idempotencyKey), jsonHeaders()),
+                            new HttpEntity<>(buildNotificationPayload(threadRecipientId, idempotencyKey), jsonHeaders()),
                             String.class
                     );
                     if (response.getStatusCode() == HttpStatus.CREATED) {
