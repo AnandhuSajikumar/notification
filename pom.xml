@@ -127,6 +127,15 @@
 			<artifactId>spring-kafka-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- Gatling: throughput/latency simulation (Scenario D). Java DSL,
+		     no Scala toolchain required. Run via: mvn gatling:test -->
+		<dependency>
+			<groupId>io.gatling.highcharts</groupId>
+			<artifactId>gatling-charts-highcharts</artifactId>
+			<version>3.10.5</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -141,6 +150,17 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+				</configuration>
+			</plugin>
+
+			<!-- Gatling: run load simulation independently via mvn gatling:test.
+			     Separate from the JUnit suite (mvn test) — does not run automatically. -->
+			<plugin>
+				<groupId>io.gatling</groupId>
+				<artifactId>gatling-maven-plugin</artifactId>
+				<version>4.9.6</version>
+				<configuration>
+					<simulationClass>com.nodev.notification.load.NotificationLoadSimulation</simulationClass>
 				</configuration>
 			</plugin>
 		</plugins>
