@@ -48,7 +48,7 @@ public class NotificationService {
         );
 
         try {
-            notification = notificationRequestRepository.save(notification);
+            notification = notificationRequestRepository.saveAndFlush(notification);
         } catch (DataIntegrityViolationException e) {
             // The real safety net - the DB's UNIQUE constraint (V1
             // migration) rejects a raced duplicate insert here.
