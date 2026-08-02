@@ -81,9 +81,6 @@ public class NotificationConsumer {
             attempt.markFailure(retryPolicy.nextRetryAt(attempt.getAttemptNumber()));
         }
 
-
-
-
         log.info("Notification id={} attempt #{} on channel={} result={}",
                 notification.getId(), attempt.getAttemptNumber(), channel, success ? "SUCCESS" : "FAILURE");
     }
