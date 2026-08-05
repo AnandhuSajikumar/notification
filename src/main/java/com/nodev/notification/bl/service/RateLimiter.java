@@ -38,8 +38,7 @@ public class RateLimiter {
 
         Long count = redisTemplate.opsForValue().increment(key);
 
-        // Only the request that creates the key sets its expiry - every
-        // subsequent increment within the same window just bumps the count.
+
         if (count != null && count == 1L) {
             redisTemplate.expire(key, WINDOW);
         }
